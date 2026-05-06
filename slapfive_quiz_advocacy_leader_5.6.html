@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advocacy Program Readiness Score — SlapFive</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #002C5F; --orange: #F37822; --aqua: #5EC9C4; --white: #FFFFFF;
+  --fd: 'Plus Jakarta Sans', sans-serif; --fb: 'DM Sans', sans-serif;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+html, body { font-family: var(--fb); background: var(--navy); min-height: 100vh; overflow-x: hidden; }
+.shell { min-height: 100vh; display: flex; flex-direction: column; }
+.prog-track { height: 3px; background: rgba(255,255,255,0.12); }
+.prog-fill { height: 100%; background: var(--orange); transition: width 0.5s var(--ease); width: 0%; }
+.top-bar { padding: 18px 40px; display: flex; align-items: center; justify-content: space-between; }
+.logo { display: flex; align-items: center; gap: 10px; }
+.logo-icon { width: 30px; height: 30px; border-radius: 8px; background: var(--orange); display: flex; align-items: center; justify-content: center; }
+.logo-name { font-family: var(--fd); font-weight: 800; font-size: 17px; color: var(--white); letter-spacing: -0.02em; }
+.logo-dot { color: var(--orange); }
+.q-count { font-size: 13px; color: rgba(255,255,255,0.4); font-family: var(--fb); }
+.screen { display: none; flex: 1; align-items: center; justify-content: center; padding: 32px 24px 64px; }
+.screen.active { display: flex; animation: rise 0.45s var(--ease) both; }
+@keyframes rise { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pop { from { opacity: 0; transform: scale(0.75); } to { opacity: 1; transform: scale(1); } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.inner { width: 100%; max-width: 700px; }
+.dim-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(243,120,34,0.12); border: 1px solid rgba(243,120,34,0.25); border-radius: 100px; padding: 5px 13px; margin-bottom: 24px; }
+.dim-pip { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
+.dim-pill span { font-size: 11px; font-weight: 600; color: var(--orange); letter-spacing: 0.07em; text-transform: uppercase; font-family: var(--fd); }
+.q-text { font-family: var(--fd); font-weight: 700; font-size: clamp(20px, 3.5vw, 34px); color: var(--white); line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 10px; }
+.q-sub { font-size: 15px; color: rgba(255,255,255,0.45); margin-bottom: 12px; line-height: 1.6; font-family: var(--fb); }
+.multi-hint { font-size: 12px; color: rgba(255,255,255,0.3); margin-bottom: 20px; font-style: italic; font-family: var(--fb); }
+.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.opts.col1 { grid-template-columns: 1fr; }
+@media (max-width: 540px) { .opts { grid-template-columns: 1fr; } .top-bar { padding: 14px 16px; } .screen { padding: 24px 16px 48px; } }
+.opt { background: rgba(255,255,255,0.04); border: 1.5px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 18px 20px; text-align: left; cursor: pointer; transition: all 0.18s var(--ease); display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.opt:hover { border-color: var(--orange); background: rgba(243,120,34,0.07); transform: translateY(-1px); }
+.opt.sel { border-color: var(--orange); background: rgba(243,120,34,0.1); }
+.opt.sel .chk { background: var(--orange); border-color: var(--orange); }
+.opt.sel .chk::after { content: ''; position: absolute; top: 2px; left: 5px; width: 4px; height: 8px; border-right: 2px solid white; border-bottom: 2px solid white; transform: rotate(45deg); }
+.opt.sel .opt-score { background: var(--orange); color: var(--white); }
+.opt-row { display: flex; gap: 12px; align-items: flex-start; }
+.opt-words { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.chk { width: 18px; height: 18px; min-width: 18px; border-radius: 5px; border: 1.5px solid rgba(255,255,255,0.2); transition: all 0.15s; position: relative; margin-top: 1px; }
+.opt-label { font-family: var(--fd); font-weight: 600; font-size: 14px; color: var(--white); line-height: 1.4; }
+.opt-desc { font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.5; font-family: var(--fb); }
+.opt-score { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: rgba(255,255,255,0.07); font-family: var(--fd); font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); margin-top: 8px; transition: all 0.18s; align-self: flex-start; }
+.nav { display: flex; align-items: center; justify-content: space-between; margin-top: 28px; }
+.btn-next { background: var(--orange); color: var(--white); border: none; border-radius: 11px; padding: 13px 26px; font-family: var(--fd); font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.18s; display: flex; align-items: center; gap: 7px; }
+.btn-next:hover { background: #e0681a; transform: translateY(-1px); }
+.btn-next:disabled { opacity: 0.25; cursor: not-allowed; transform: none; }
+.btn-back { background: transparent; border: none; color: rgba(255,255,255,0.35); font-family: var(--fb); font-size: 13px; cursor: pointer; transition: color 0.15s; display: flex; align-items: center; gap: 5px; padding: 8px 0; }
+.btn-back:hover { color: rgba(255,255,255,0.7); }
+.intro-inner { max-width: 640px; text-align: center; }
+.intro-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(243,120,34,0.12); border: 1px solid rgba(243,120,34,0.25); border-radius: 100px; padding: 6px 16px; margin-bottom: 24px; }
+.intro-badge span { font-size: 12px; color: var(--orange); font-weight: 500; font-family: var(--fb); }
+.intro-h { font-family: var(--fd); font-weight: 800; font-size: clamp(28px, 5vw, 52px); color: var(--white); line-height: 1.08; letter-spacing: -0.03em; margin-bottom: 18px; }
+.intro-h em { color: var(--orange); font-style: normal; }
+.intro-body { font-size: 15px; color: rgba(255,255,255,0.55); line-height: 1.7; max-width: 480px; margin: 0 auto 16px; font-family: var(--fb); }
+.market-stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px 20px; margin: 20px auto 32px; max-width: 460px; font-size: 13px; color: rgba(255,255,255,0.5); line-height: 1.6; font-family: var(--fb); }
+.market-stat strong { color: var(--orange); font-family: var(--fd); font-size: 15px; display: block; margin-bottom: 4px; }
+.intro-meta { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 32px; flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: 7px; font-size: 13px; color: rgba(255,255,255,0.45); font-family: var(--fb); }
+.meta-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); }
+.btn-start { background: var(--orange); color: var(--white); border: none; border-radius: 13px; padding: 16px 36px; font-family: var(--fd); font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+.btn-start:hover { background: #e0681a; transform: translateY(-2px); }
+.gate-inner { max-width: 520px; text-align: center; width: 100%; }
+.gate-icon { width: 56px; height: 56px; border-radius: 16px; background: rgba(243,120,34,0.15); border: 1px solid rgba(243,120,34,0.25); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; }
+.gate-h { font-family: var(--fd); font-weight: 800; font-size: clamp(22px, 4vw, 36px); color: var(--white); line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 12px; }
+.gate-sub { font-size: 15px; color: rgba(255,255,255,0.5); line-height: 1.7; margin-bottom: 32px; font-family: var(--fb); }
+.gate-form { display: flex; flex-direction: column; gap: 12px; text-align: left; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 480px) { .two-col { grid-template-columns: 1fr; } }
+.field-wrap { display: flex; flex-direction: column; gap: 6px; }
+.field-label { font-size: 12px; font-weight: 600; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--fd); }
+.field-input { background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 11px; padding: 13px 16px; font-family: var(--fb); font-size: 15px; color: var(--white); outline: none; transition: border-color 0.18s; width: 100%; }
+.field-input::placeholder { color: rgba(255,255,255,0.25); }
+.field-input:focus { border-color: var(--orange); background: rgba(243,120,34,0.06); }
+.field-input.err { border-color: #E24B4A; }
+.err-msg { font-size: 12px; color: #E24B4A; display: none; font-family: var(--fb); }
+.err-msg.show { display: block; }
+.btn-reveal { background: var(--orange); color: var(--white); border: none; border-radius: 11px; padding: 15px; font-family: var(--fd); font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.18s; margin-top: 8px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-reveal:hover { background: #e0681a; }
+.btn-reveal:disabled { opacity: 0.4; cursor: not-allowed; }
+.gate-privacy { font-size: 12px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 12px; line-height: 1.5; font-family: var(--fb); }
+.res-inner { max-width: 740px; width: 100%; }
+.res-top { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 22px; padding: 36px; margin-bottom: 20px; text-align: center; }
+.score-wrap { display: flex; align-items: flex-end; justify-content: center; gap: 2px; margin-bottom: 10px; }
+.score-big { font-family: var(--fd); font-weight: 800; font-size: 88px; line-height: 1; letter-spacing: -0.04em; animation: pop 0.5s var(--ease) 0.2s both; }
+.score-of { font-family: var(--fd); font-size: 26px; color: rgba(255,255,255,0.25); padding-bottom: 12px; animation: pop 0.5s var(--ease) 0.35s both; }
+.tier-tag { display: inline-flex; align-items: center; gap: 7px; border-radius: 100px; padding: 7px 18px; margin-bottom: 18px; font-family: var(--fd); font-size: 13px; font-weight: 700; animation: fade 0.4s var(--ease) 0.5s both; }
+.res-title { font-family: var(--fd); font-weight: 700; font-size: clamp(20px, 2.8vw, 28px); color: var(--white); letter-spacing: -0.02em; margin-bottom: 10px; animation: rise 0.4s var(--ease) 0.6s both; }
+.res-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; max-width: 500px; margin: 0 auto; animation: rise 0.4s var(--ease) 0.7s both; font-family: var(--fb); }
+.breakdown { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; margin-bottom: 20px; }
+@media (max-width: 540px) { .breakdown { grid-template-columns: 1fr 1fr; } }
+.bd-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px 10px; text-align: center; animation: rise 0.4s var(--ease) both; }
+.bd-label { font-size: 10px; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 7px; font-weight: 600; font-family: var(--fd); }
+.bd-score { font-family: var(--fd); font-weight: 800; font-size: 24px; letter-spacing: -0.02em; line-height: 1; margin-bottom: 3px; }
+.bd-max { font-size: 10px; color: rgba(255,255,255,0.2); margin-bottom: 8px; font-family: var(--fb); }
+.bd-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+.bd-fill { height: 100%; border-radius: 2px; transition: width 0.7s var(--ease); }
+.proof-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px; }
+@media (max-width: 540px) { .proof-row { grid-template-columns: 1fr; } }
+.proof-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; padding: 20px 16px; text-align: center; animation: rise 0.4s var(--ease) 0.9s both; }
+.proof-num { font-family: var(--fd); font-weight: 800; font-size: 26px; color: var(--orange); letter-spacing: -0.02em; display: block; margin-bottom: 5px; }
+.proof-lbl { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.5; font-family: var(--fb); }
+.proof-lbl strong { color: rgba(255,255,255,0.75); display: block; }
+.cta-bar { background: var(--orange); border-radius: 18px; padding: 26px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; animation: rise 0.4s var(--ease) 1s both; }
+.cta-words { flex: 1; min-width: 180px; }
+.cta-title { font-family: var(--fd); font-weight: 700; font-size: 17px; color: var(--white); margin-bottom: 3px; }
+.cta-sub { font-size: 13px; color: rgba(255,255,255,0.7); font-family: var(--fb); }
+.btn-cta { background: var(--white); color: var(--orange); border: none; border-radius: 9px; padding: 11px 22px; font-family: var(--fd); font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.18s; white-space: nowrap; }
+.btn-cta:hover { transform: scale(1.03); }
+.btn-restart { background: transparent; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.4); border-radius: 9px; padding: 11px 18px; font-family: var(--fb); font-size: 13px; cursor: pointer; transition: all 0.18s; margin-top: 14px; display: block; width: 100%; text-align: center; }
+.btn-restart:hover { border-color: rgba(255,255,255,0.28); color: rgba(255,255,255,0.75); }
+.c0{color:#E24B4A;} .c1{color:var(--orange);} .c2{color:var(--aqua);} .c3{color:#63DC9A;}
+.bg0{background:rgba(226,75,74,0.12);border:1px solid rgba(226,75,74,0.28);color:#E24B4A;}
+.bg1{background:rgba(243,120,34,0.12);border:1px solid rgba(243,120,34,0.28);color:var(--orange);}
+.bg2{background:rgba(94,201,196,0.12);border:1px solid rgba(94,201,196,0.28);color:var(--aqua);}
+.bg3{background:rgba(99,220,154,0.12);border:1px solid rgba(99,220,154,0.28);color:#63DC9A;}
+.bar0{background:#E24B4A;} .bar1{background:var(--orange);} .bar2{background:var(--aqua);} .bar3{background:#63DC9A;}
+</style>
+</head>
+<body>
+
+<!--
+WORKATO WEBHOOK SETUP
+=====================
+1. In Workato: New recipe > Trigger: "Webhook (HTTP endpoint)"
+2. Paste your Workato webhook URL as the value of WORKATO_WEBHOOK_URL below
+3. The recipe will receive this JSON payload on each submission:
+
+{
+  "quiz_type": "advocacy_leader",
+  "submitted_at": "2026-04-10T14:32:00Z",
+  "contact": { "first_name": "Jane", "last_name": "Smith", "email": "jane@co.com", "company": "Acme" },
+  "scores": {
+    "total": 22, "max": 30,
+    "advocate_identification": 5,
+    "preference_capture": 4,
+    "activation_surfacing": 5,
+    "request_fulfillment": 4,
+    "revenue_attribution": 4
+  },
+  "tier": "Scaling with gaps",
+  "answers": [
+    { "question": "How do you currently identify...", "selected": ["Unified signal model"], "score": 3 },
+    ...
+  ]
+}
+
+4. Add HubSpot action: "Upsert contact" (match on email)
+   Custom properties to map (create these in HubSpot first):
+   sf_quiz_type, sf_quiz_score_total, sf_quiz_tier,
+   sf_score_identification, sf_score_preference,
+   sf_score_activation, sf_score_fulfillment, sf_score_attribution
+
+5. Add HubSpot action: "Create note on contact"
+   Body: Loop through answers array to build call prep summary
+-->
+
+<div class="shell">
+  <div class="prog-track"><div class="prog-fill" id="prog"></div></div>
+  <div class="top-bar">
+    <div class="logo">
+      <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iNjkxMiIgem9vbUFuZFBhbj0ibWFnbmlmeSIgdmlld0JveD0iMCAwIDUxODQgMjU5Mi4wMDAwMDEiIGhlaWdodD0iMzQ1NiIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCIgdmVyc2lvbj0iMS4wIj48ZGVmcz48ZmlsdGVyIHg9IjAlIiB5PSIwJSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgaWQ9IjM3NzYxZmZiN2QiPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0iMCAwIDAgMCAxIDAgMCAwIDAgMSAwIDAgMCAwIDEgMCAwIDAgMSAwIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiLz48L2ZpbHRlcj48ZmlsdGVyIHg9IjAlIiB5PSIwJSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgaWQ9IjlmODhhNTIwYWYiPjxmZUNvbG9yTWF0cml4IHZhbHVlcz0iMCAwIDAgMCAxIDAgMCAwIDAgMSAwIDAgMCAwIDEgMC4yMTI2IDAuNzE1MiAwLjA3MjIgMCAwIiBjb2xvci1pbnRlcnBvbGF0aW9uLWZpbHRlcnM9InNSR0IiLz48L2ZpbHRlcj48Y2xpcFBhdGggaWQ9IjI5YWNlOTZmOGYiPjxwYXRoIGQ9Ik0gMzE4LjI1NzgxMiA0ODggTCA0OTIzLjczMDQ2OSA0ODggTCA0OTIzLjczMDQ2OSAyMTAyLjc4OTA2MiBMIDMxOC4yNTc4MTIgMjEwMi43ODkwNjIgWiBNIDMxOC4yNTc4MTIgNDg4ICIgY2xpcC1ydWxlPSJub256ZXJvIi8+PC9jbGlwUGF0aD48bWFzayBpZD0iMjQyZDJjYWNkMSI+PGcgZmlsdGVyPSJ1cmwoIzM3NzYxZmZiN2QpIj48ZyBmaWx0ZXI9InVybCgjOWY4OGE1MjBhZikiIHRyYW5zZm9ybT0ibWF0cml4KDE1Ljk5MTIyNiwgMCwgMCwgMTUuOTg4ODgsIDMxOC4yNTc1MTQsIDQ4Ny45MTM3MTQpIj48aW1hZ2UgeD0iMCIgeT0iMCIgd2lkdGg9IjI4OCIgeGxpbms6aHJlZj0iZGF0YTppbWFnZS9wbmc7YmFzZTY0LGlWQk9SdzBLR2dvQUFBQU5TVWhFVWdBQUFTQUFBQUJsQ0FBQUFBRElDbUUzQUFBQUFtSkxSMFFBLzRlUHpMOEFBQkMxU1VSQlZIaWM3Vng1ZUJSRkZuK1pUQklUa0VCTUVBSWhVU0lJR0NTQUdPVkd1UlF3Z0NDaUtGNExuK3l1NGZBQ0QvQllGWVZQUlJkUTFnTUVWSzRBeThvUmtDT2dSSUxoWERrZFFnQWhFQkxNU1k2M2YzUjExNnZxNnBtZWZFa21DL3orNmFyM3FycGUvNmFxK2xYVjZ3R3dqWkRaK1dYcjI5b3ZmOVZoR1NKaVlXOWZtMUZyMFFFUkVmRkNJMThiVXJOd21FVjFZK3FwU3ZiVkxtSHZWNmM1L3djSVhWU0daUnU2bXhWZmFUMEl5MktsQ3YzNmh0YU1hYlVDL3RzMUdtWUh5cHI1akNCOFZ4Q1BLMEFzR0Zkajl2a2NBM1VhMW9WSW1sbTZKdE9QU0IvVlpBL1ZwSTAreFF5ZEJsemhMMm9tR1pvT1hCaDRqcEdtbU11dURNZ1Bkb09SU3B3bWFuNHhVdmR3NGYwUjJqV3FTeFhiVldzZ0UzU2VKeWZmSTJqU1N2VlVMeTdzckNjNlZxMVp0UWN5UVJrODZmZWw4TG92MnFxbnV2SUovQlk5MGF5cURhc3RrQWxhaHp3ZE5WMVFMZGNUSVowTVdZU2V1TDZLN2FvMWtBbktYa0V5WTNwU1ZiTEJIUjlqUmwrcXFHSzdhZzFNYjUrWk5QTlpFTW1jVHROVGR4dXlmRlBpU29PSm9PMHJTU2IyUmFveXhsaDc4MzN5cXRDbVdvN29RdVFvYms0MHpRMXhFMTIwV1pkTTlJR2xOUUt6ZzNmaU5aSUpta0V5eDFMMWxPRXFHcS8rcTJlSUFjemNRaklQRUtjSHZ0QVQ3ZlNFNFRhZHFWcXphamVpODhnZzIwc29yUE1uRXk3V0pSL3F4ZHFwYm5RbFFMV0dPakdXWk9JZTRlbUM3MWpDbUpuTzZRbFgxWnBWMnpHUGRLSGpaT09EN1NwaXRpNTRtZ211b3BjWUFBQUU3eU1NUFVNVW01aE1kNXg3c1B4UHZyRFNsMmlSeXdrNlFvYmhmVXpXZ3VWdlpQbFBmV0tsTHpHSWRLSGhYT3pIdWxhQ0xzalI4ay82d3NZYVEwQWRoZkJWVHRCdUluNVFFL1hYOHh1MGZLdnF0OUpuNkxLdERQTldESlAyRDhGdklXZm9YaUwrQlJFUkUvWDhWRVJFUEZsRHR2b0NQVW8xRW40ZkxpbUNVZzJDdmlmaVhvaUlPRkxQOWtSRXhIL1ZqSzArd1E2RGhnMHhvcWJCQVYxenVTRVJMMFZFSEszbkFpNGlJdmF0RVZOOWczSStraTQ5SnFxYS9xNXI2RkkwOGhJaURqYXk4eEh4akR3K3J5VFF0VHN1RmpjR1k3T1lmQitWUG9XSTNZeGNkMFI4M2NqMWNibGNMdGVCWlluMGFLaGFFSHpQaS9QVzd6cm1jcmtlQkFENHpPWGF1MmFzNlRDdkN2QWZTaEFlRWRkVUJrTjAxd08rUmJ5SjU5THdJamtLMFcrMG9qcHM1WWhiV0dUWVBCb0FJQmtSRVRkWFE2czlCSUt3ZUxTZ2pUMm1pVitnd3BEVVkyUk1kZGc4bEdjTWduQmUxWnZLTVlsTURKUWdIT3VoWW1Vd1YyUUlad2tUU3VNTTdhY1JxdmdIZ1FVNFFZYXpYUTE0U2pCNE5JQkIwT3BxYUMxNEU0cFlLNXoyMUYySmlGaDhuYjJiRVlLcTQ4ZlVFSmx2U2RCdUQxVzlod09LQnF3U1JYMjNOU1c1L01TM0FTRG9kcS92WEgxeFJNK3FQSDhOVlg4QzdnUW9USnowampDczJxYmVlNVRuOEpXdFh6ZUNWanVydk9sS2d5ejhMbDVpdTcyclhRQUFjS3FhbXV5NFh4eGxwK01FZGRpY3kwUHMzWWdNc2FsVmI2WUc0K3hnOTdENjFkV0dDVUZ2WEJZWXlyNUYxTnYxQkd1Q29LR3NnVVBXSTYwS3dRWnR5V3Z0NkZZOWhLYzBGWXFWMTRRdE5xRjdYZThWMUVScnhxeDJzT2VqZEFBM1d4ZFdFODFYQmczWWRZdmJVbFVGcDVIQ2hja3ZUT1M5dHZXU1BsYmRwazdUaUpEQS9NSXpaOHE4YTZ0QlpQaDF3UVdsdWVmLzhGeXhUcjBnS01wWDlwRmdkdjNEdTlZOW9HR3p1aUVWeFRrbkwwcHlKMGtYdlA3cDVER0d3OU5ydXVxMHRIMmZicmRIc25UcDRiUXRxM1BzdGQ5K1FKZjJ4b3FrUEhQUHpvMjdVRjNTdjFPditEWlIyaTkxS1hQdnJwUjk2bklnc1BmeW5aQi9jdlVPQUFESFFvM0NjMzlSMXdzYTJMVmhNT3grZzdmWVpXQkN2QjV4bUplMmZXV0d1aUlBQURUOEI5K043aThyNnp4M1JISXFzWFFsUFZtMG1LU2RvL2ZKOVJBejM3eFIwWDZyajg3TEJZOVBqaENLVEdWeVFhZzVpbk1BQU9CYlZ1Qlc1Uk4yTzRHSWlIL1Y4Mkd2bkpGYlBEamFxYXlxb2Q0a25ZVXpVcnowdzZmTmo0bUlHNGtoU29MaTl5anJZY0VVMlk0bWl5dVVCVitqanJ3Ymd2QkJBSUFIV0lGWFZZOTNWd2tpSXBhekxTNi9NVG1xRmc5MWRjTVErSFZmb0oydHZrMmxnVitvSHhPeG1IdHVLb0pHRkZ0VnhLM2hRc01qY3EwSzdtOWpqNkR2QVFDQ0xtb1oxZGdNUEt6cDFtclplaXNzR3F4UXNzc1IxRzlXUnJtdzlQTlB0bnhNeEVsdUNCcGNibDBQOTlRbFRVeDFVekN2dTZtWWl5R0JFS1JGbW43T1NyUTJQOWhJcG5vY0FBQkNkMXEzT05zOVF3QVExSktHU24vZ3huckVFWllFeGVaYjEwTEUrYnlGeVc0TEZ0NWh4V05uUXBBMnZmWmltamZORDdWTzB4U0ZBZ0FFcHFJYmVPaERFcnE2dFI3em9xd0lXdWUrSWhyUmF2ZDdLSGhLbjlObGdwcVpDSEt3eWZJMzAyTTBaTjE1Q1FDUTBBdkU4cDF6WGtwS2VuMytZWExqbnFicWJ2Q3pCL08vc1NESUE3SDh4S1JCdHFlUzM2b0oyZ0VtZ21BbTA0bExTZ0FZeXhSREFBRHVOTjRJNTE4d1hwU3RaNWZwMHVOZTdFOTJKQlpWYkgzN21TR0pqMDVaU1NmZjhtWnFnaGJRWnluZXRmeXJCV3YybGxGWkFYdEJmWWdlMFYxRjBPNW9CVUYzTUtWcGpHM1Q1SGxCQUFBLzZmZFlMcXdhMnY2bXk1UHNFL1FldCtpQU1mVkZMQ0tHdnFJa3lFbmVTNW1Qc0kzSTY1ODRSU3BxSWVnTmhWZGQvcnhoYldKdTdqSGxvTURGSnBHZ3BLU2t2ei9Xa1owT2lBUUI4MVRrTVJiSitzd1hBSHltd2puU0NVUEVYcVk0N2M0ZEVrRkdHSGsxK0szbDRoMUtnaEo0UG91NGV4RW51RnliMzZkUUpwYnEwNDNmRTM5UytXMENRWUtCRWtIVFdCbHBqSTFuNHQ0QTdJQVBFVGVZdGlxaTlaOTFnTGpVY0FQdUMrWWY1Rko4dVk5QmZudW5hb0VWOExXUlhKWE54ZG52enpMUzJnSmtCRmZDNTJQMGg4Y3ZEMjRrbXhxamhLQmJkMWpNQWkxSHZpeUkyVWRKWnpjQlFPaEFMVlA4bEduTmVlSWw5bzUvNU44MjJ3c2tQMk1NVlV6Z1RrNHNnUDM5b0w2OFhCSUFRQ3hwSUUzNDBVWVJqVFppN1BRZ1NOZnl4NFJDTjdHYUh3TUFQTVF5SHlqTWM3bzAzUVdIelUxYzZoQjlSWDI3bWZFejF1L1JJSDlmNWhieU1vOTY5dU9GcnJoZ0IwKzNGRGVwM0lGRlVkN2NnUXIxcjlvV0FRRG9ML0ZQRkxYTDVtclhNTHVobC81MEpqamk1dGpVWmc4YVJienJKQUNBT1R5L1N5bzdoRFE5RE1CbUQycktwbVBoODhoZmFiZGl1OHc3UUlWYldCdFA2M05RVkd4RVNMM3JRaTRYRmhSbVpXYVZ5dVhMTThuWFBMRXJEaTFZczhkaXM4SUdRdm8vWXdwMklQRkZTeVRWbWdJK0M3V1JsWmJJMnFhZGpnOTdpY3R1WmYxaE1RQkFRRXN0czE1Wi9jaEp6Zk9OQXljQWhFMGNHVU8xRmIrbDcxanJFaXJzRkQ1M2F2bldXOWxwUDZXbUZkazFsNkZweStpbzVxM2FLVjRNNUVOaGVhT3daRnMvSSsxRm5OWmlqYUNiTzZRYm9tSHN1Z2dBSUpaWllYR1NscUVSMUFJQW9OTTVWR0QzdUdCU2ZvU3F5T1dmcHZlWERoUXRoMWlkKzZkdnVhUzZpVGJFU25uZTlBbjFUSzdiRG1CemlFRllxV21NTVFkd0R3RHcxMFNNbXFCMzlmczVvWDV5aEtwRS9DZVRFM2pnMkhMVzVRUUVKQ1E4WDdUMjI5VWVPNUp6MEdQOTNicnQ5WGluT211S0tON1BrdzFsblRWeTFnNEFBSUNSTCt0TXhyRkJwYzNmalpsMG1ucXVZSDVOWTNEQ3lNYktFZ0NSY1p5Z3l4Ty9WeGNLSGp3NDk0dVBNdDJaNmovNk5VL2ZJeEpYMzd6VGZFcFp6aU1XYVFSRjNma3pFK2hSY1lzQUFFQS9VcE5pb2lUVUJRZkVXeWsvK29Ga2xzeTF2RW45Q1VkbjFMWFV3azJwODd6NVh0TzhUMDhrM2dScXJXYjE5SmtIV0l6aGR1M1h0UGRuQ0NIZ1VGZ0VBQUEvZDA0U090KzRCZGEzQ1ppdzMvTHN2bU5hZ2tJcW54MXdtTjZnOUVPaVlKUFNHdmxzdTI4WWMwbzYzYXhkRjJvWHUxdzdJRVVoTFV2dWVaZmtJSlEvUHFuRStqYlJXeFc3ZHdBQTBUK0VtMlNGeTRlMnRMeFRnTUpFQTE2OU5yV2hCRkYzYWxmbUpaWXQxYTUydnlGMXdKcDFrcWhrdzk4aUIyODJsY1FaYlZlWmhBYnFMVlhHRFBrdGtQakIvUjhQQ2grNjNOeFBkSmo1ck93SjVscldUYlV4NW1CRExZVXRDZTF5N1FRY012ZFJJM3M2UFdQSEZxdTZoeCtJR3pmQ2F1eTJlbTY2UXBvb25BNWtyTm42OHlVUEJwbGZWRHpBejd2UDlrcVhhQWRqdzUrdkFJRE83RFhNK3BVeHMzd3RWeE5RREU2QXdsSFRCclVPS3IrWWVmTGswUXZ1Mjl3Mzlya2U5M1Jwcit3czQyY29UbUxIay9UbWlkd3BzMTRDMW04a3Y4ZUlFM2tPdk1FaWphQ21uYmVCTVVVWDYxOTFuMlhYRjgvSzFVUTRBUUNPem5SZmlLQmszVG9Jakk5dmQxZWN2Q0JyMUgyVHFYUWowb0ZtUEU4bWZUSnM1Sm10d3hwSlFCYU01OEViYkR1bGZWczdmQnVBUDV1Q1Z1bWRNSXRkbTNzZ3FESWhXWmQzemhsNyt3MUQ1MHN1M2QzbWttVGJPNFh5UXdtUzM2S21sOTRkUEhuY3ZwRUFVTUYyc1ljNkFIb3diOWo0VnRMRnJwNUNLU3NkczNaeCtlT1JmOG1pa2hoeklmSnFlMDl3R3NpaVN2YWNCMHY1dHRFOGZjUUxBOEZnbzNGbmdJZTFaSzdoMjUxaFU3amlaeFZnaTZBK0xnTS9FbkhoNTdjdUpka2I1R29BWlA5RzlCckljbDcyd3R0SWZ5UkR2K2V6aW1Pd1FQb2g3VG9jQWxpRTNESStvTm15N1Q0UEllKzJDSEpFRytncytDa0ZENVBmOUU5enhRWThlWm5Ld3hONStyQmM2UjNCNUppbmVSclQ1TElld0xyUVVFZnZCb0lBQUlEOVYwc1Q1ZWxYdmJkL3pjN056YzN0YUk4ZzhsNEo2Q2RveXZobWdvb2dNcjhJc2ZydmNKZjRzTW1UNzBLajFnTytKdnNGZTNNOUdDcERIMlBkMkFnN1F3YUFubFR0YzBla1RXNFhIaG9hQ3IvYUk0anU3RW9SR2NRbE5uVUZ3VytoVWFCUGtsNGh1NmtBOE80RUkxbDNXVGVpY09Pb3FuR1liVStPSHFSZHZ5UCtjeXI3MmZzTU1OZjduRDNXQ3J1aGh6UUk5anU2TUtYN29WM0F0QitVeExNWGpMazI4QzI2SGRRYkFDQkcyaVBhMk1zQkFGRG5pZDhGc1hhSVkyOC9TTU1FOGI2ZHFFNC9xdndqV3Fwa2ZNdHQvL0Q1ZmRyS3FUSDZTenI4RGJMUmxlczBFOVNUVk1zYzRBY0FFRHYrT0wzWklUOFZRWWc1VzVLVDA4WElXMjI3ekR1Q0lvVjRvNk9DcnJtdU95cUY5STdRMjNVWGFTYWlqV2hwMllHbDh6Nzg5THNNb2ZWWllDWW9rUDZIQStha3B1dzZLeEdoT2J0bWdsUVk1RDFCSUh4bjhZYW9NejQ2elJ0RDVvM0lyNHp5QTIwVEJGWnhSaHhGMFFxQ2hIOG9VT0ZYcDMyQzlMOVc4WXFnWitnZHBKaThxQUpENDVyV0tRZ0EvR0pITGVPRFFuYnAzU0ZHdlo5TU1BVlVCTFVvczY2QmlQbk1reVFFS1NQaUVCR0w5Y2Z6aXFDd0VuNEgwLzc4R0hyLzh0UDdqeFJSd2JrbUFMWTlhZGRqSHZaUFZyNmpGQjlXaXhsS2h4ODB5ZmIrMDZMd3MrWm9IeHZJSVcvSnhiSnk3cGNrNDJqY0pwWWVRUlFOOWU3RGp4RWw2QVlyMlo2ODZWUWo0QWZyU3JtR1AwMTYwT2JBemNyQ1BON0xxeDVFem1NcXpPY08vZ3ZORFRIazl6S1Y5b0NFTE11YmxieXFPNy9tWTUrUVZWYTFOdko5REVvUWhHNVJ0UEFzTjhRN2dvS05FTUN0SmgyQTQwMEw0MzZyeEQrTGg4MjJtRkNTZVFpcTRsek1iOUtmcWtvWkk4bUtRaUFJQWorUmc0SFQ2Y21DZHdUQk4vcE4xRi80ZFZHRWNHUCttelkvSUpRUU16M1RkSzlqNzlQOVplWEJZZVNIZVZLbFU3TjdpRGNXQ0FLNE80V1czanBjV0oxNVNaRCtmeXlsaXNVMEFJQmpTSW9VaDN2c1ZiS3Q2ZVhuMjM2M2Q0MXZFWFZqRUFDVVh6aC8vR2o2VG5FSEl2dzJJK2x5Y2ZGMS9YcDN2Q2tDQUtEa1pOYkI5Ri8yUzZkMU1iOGJ5UzA5QUFDZ1ZXTDMxcEgra0hOaWYrcDZsMVE0UnJ0dXBzTGJ0TDNzZkRuMEFTQ0EvWjFxb2ZWS3QySGZ1K0tpbXpnQXlyTlBIdHoxNHdITGd2WnhmU1UrWlF1SWpLbHZzYU10OXlDR2tCcjl3d0wvK3VZVEZkc1JaaklVSzNlUEtEM3RiWTNDU3JSU2VaUXI5d3F1MlArQnJpcGNJOGdEcmhIa0FkY0k4b0JyQkhuQU5ZSTg0QnBCSG5DTklBK29kUVJaQjhiNEJyV09JT3ZZTTkrZzFoSDBYMThiVUN0QkZxdHRQSmUrQ3NFSmV0MXo0YXNSaktDOGxBZDhiWWtKL3dPclF0WkxiZ2dXT2dBQUFBQkpSVTVFcmtKZ2dnPT0iIGhlaWdodD0iMTAxIiBwcmVzZXJ2ZUFzcGVjdFJhdGlvPSJ4TWlkWU1pZCBtZWV0Ii8+PC9nPjwvZz48L21hc2s+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCMyOWFjZTk2ZjhmKSI+PGcgbWFzaz0idXJsKCMyNDJkMmNhY2QxKSI+PGcgdHJhbnNmb3JtPSJtYXRyaXgoMTUuOTkxMjI2LCAwLCAwLCAxNS45ODg4OCwgMzE4LjI1NzUxNCwgNDg3LjkxMzcxNCkiPjxpbWFnZSB4PSIwIiB5PSIwIiB3aWR0aD0iMjg4IiB4bGluazpocmVmPSJkYXRhOmltYWdlL3BuZztiYXNlNjQsaVZCT1J3MEtHZ29BQUFBTlNVaEVVZ0FBQVNBQUFBQmxDQUlBQUFCaUE2bThBQUFBQm1KTFIwUUEvd0QvQVArZ3ZhZVRBQUFHVUVsRVFWUjRuTzJkMlpiY0lBeEU3VG56Lzcvc1BIVGlROXcyaXlodHVPNWJNdDBnQzhwaUVmUysrWEVjeDlPZjluMjN0SVFRSmR6NmNVVmRINmd4c2dDL2d1OWN0RUVsRVBMRW1EYUFnN3BtQk9zczg3c2NDcDdFNGFmL28zVkpITWZSb3hrc3R6WGFtMEhJRXdNQzZ3SGJ1WnVTdGpHREVERmdnVzFXbmJ0WkN6VkdJb0FYR0NIa1JFVmdqQjZFZk5DS1lDaU5VYXNrTlJ3aUVxS0lvc0Rxd1llN1ZlUU42RVl3RHZESXl4a1FHR01PSWFPb3o4SG1zNnNZQmtsZXhnVEdJRWJJRUJhcmlBeEI1TFVNQzB3V3hKNDB4cEJJMW9iN1lJUW9JaEVZTm9nUnNqRENDQVljMnNsT1ZSS1NBdmtRVWFBeFM1MXdka2NpRUdJT1JqR1FWZmw3NlUwWlcvcTcrNzd2SEx3UlVxR2hFSTBKMG0yWmdsdmNtRXhNNHRNWUlxTHVmcklwaEpCb3RPZGc4T3VpREVhVmxDc0pRdThpaDhGNGpLb2c2ekZ3cys5SFkwOHlnQ3g0NksyYW1JMTFsNlN6VVQ0TzVFOE9sQXd2MDBQY0IxRVJ2TFc0SXZvTmRvTHdRZzlMOXNGVVgxRVJTaUFmWHFnSE9NS041c3FMelZJaERHSjYwQlVRcGpJNVpqU20xSDRNWHhDb0xoU1NueThxT1k3anRrOVBMbGRjdmw2UkRSVkZJak1yc0UxVFl4TkdFUktDSDBnLzVvSGxsZUQ0RU1qUEJwSkJSV09VR1hrdC8zVjl5RTd4MDU5OGY0cXkvOUg0T3FDdmdQeTNpamp2ci9vV1dWaysyeVkxSEpoMGN1K2p5VkNtS2xSWkZVcHY1UWdaV1BBSk1OejU2UUJtM2c2TTZBWUt0YjBWQjd2dDFpek45KzJqNnFYT0t1cEZOUVd2TFdCQnBwR2VWN1U2azNGZVlyUEdlWUZoMTlZY2J6U1pmNE9JWGQzTUJ1NnNRbGI3YmJIYVhtMWtjb2lIMnAxMll4Tko5ZGFYNFNVUFdRdlB1UFhhbjlUZUFCZ3EzeWFQdVN0VlNtTkdxNlNITEdYMmwreDRma2NKcFNuY3FMcHNEQmpJNU9pUDd6SlRVRHhsbG9oTFF4WDFWUDdRM29aWjFaVnZQZjBKNjNhOXBSVFZOK2JGYk1uZDlQRVhrVkFlOU0xcE1LajlWVWtid0FoUjRWSysvR1pmN2VuWkpJbTZ6cTJwWnZhN09HcnRjMGFsTWJNWGorNEZrMFZGdzdITlFuVVhMM0pOcDU4cUFtVFRuMFM3WlY1MUhJL0YxOVJFamhMajlZQklnYTBFdzljb296MFllTUdSMHA3UTVLYlo1N1VWNG01NjRrNU1WWHRaOVRUbEVVeUZRa2V3K1gxM3k4RlBXVkhNL3FxSHpNbkFJQWFzcUozOU5GS2FxY0NHdktseFNscUpiMVBGSzhLeXA3c1lvT3FpYUxNMWx4UzJ6bjU0SEVmY0lTSThTVndKOS90Q2J1WHRtT3VJeGRLcXNUVDV2ZytISGlJZUQzY0pHOFF4aURZTU9rZGQzakUxVXhLbktaWGVobGVCemErMHdEbE51cHpYRE50N3pBekR6aFl5WXA5VFh0TGozcHNmNEJ1aS9LTGx5Y0k0Vzl1T0sxMHU5ZG96czFMbEc3NjJqOERnMnhGUDVpcHRmUmgzdGJWamdqMnB3MnpUK0YrbGhCVExUdDhVTnJhV1hGV2s3cjRudHozSzREVFhQS0VYT1VaNVdoU0JGRXZTRVdFVUhYZVpYb3pOU1ZWZkluUWRJSXM5VG9tMXdNeGNHZjlnS0JuaTBoWlptc1loZ21YUldKWW1KTGNFaVlwNGdjVlpRTjlBMncvRWdLRStrNmgxa0FMcmwxWWNCWkpFSk5MVkNVWmdncWhsRnVneXRrcVRKUjhLU0p3MytPL01Qc244WTlqY1F6TEtwRDF2UHJjeVEzK0t1b0V4S0g0M2svdFdlNHJONWJnTGNWNlphNk9YVmFoUjdGWnVOTHQza2J3dmZuZlhWY2psU1FpaG1zTXVrMlBvU0tubENjSkp2SnB6eVp0cXZCSzc5SndaTVZYcSsyblBmMFpUV3IxVmZHOEZOakFnQzNxNmJSYWJMRlVxMUNaYmNKS3FhN0o5WGJMTUt3UVZXTjMwRkJyenZjQTRxYm9jVWZKWVVJRnRTYnJJMDYzWGxnZkRqMytJYTUrM1lRMUdyejNzK1ZqRU9kako3ZkdUYU1JcmpmUzFMWnBueElpblRQUHZpTTdWams3ejluMjNFNWpZYXluNlRRb2ozMHgvOTZ1ZktoeHQ2TkFSakppeHdQZ1Erd2psTWZtWmNCcDNEb1lpZnRlSmI2RTlHajZSbFRrNU5qRVZXSmFlbE1WT0ZHOTdYZ05PbHk0ZXdlSjNuZmdXcGlEc09hbGxyd3lZeE92V2Ezc2kySENMYW1hNUttVVZLMThaRUxicmZJaGdYZ1FiRnVQaVVwOGhvdkZieEtzRXI4SVQyUUJCY05qWHpCSzNPWmpxUTZJS3p6dEtTV0ZEa3hTZHBDenorejg5OThIZzJROTZhN3NRSTRIbVRWcVZRbDBHb0xMc0svNzAzMmllNzhGbUE4NW9IWHJVcWlWMWhjcStGelJ1VDlYUlBlNzRJdzlOYnB0a01tMjM4NU9WV2lKN0xCZVg1cEE1a3cwUWlKZkhvaVZaZktPWkVGOG9NRUlVb2NBSVVZUUNJMFFSQ293UVJTZ3dRaFNod0FoUmhBSWpSQkVLakJCRktEQkNGS0hBQ0ZHRUFpTkVFUW9zSDh6MFRjUWZlV3VqTWRvZWZCc0FBQUFBU1VWT1JLNUNZSUk9IiBoZWlnaHQ9IjEwMSIgcHJlc2VydmVBc3BlY3RSYXRpbz0ieE1pZFlNaWQgbWVldCIvPjwvZz48L2c+PC9nPjwvc3ZnPg==" alt="SlapFive" style="height:36px;display:block;">
+    </div>
+    <span class="q-count" id="qcount"></span>
+  </div>
+
+  <div class="screen active" id="s-intro">
+    <div class="intro-inner">
+      <div class="intro-badge"><span>For advocacy and customer marketing leaders</span></div>
+      <h1 class="intro-h">Does your advocacy program have the infrastructure to <em>scale?</em></h1>
+      <p class="intro-body">You have the business case. You know advocacy drives revenue. The question is whether your current setup can identify, activate, and attribute advocates at the scale your business needs.</p>
+      <div class="market-stat">
+        <strong>Only 5 to 15% of community programs are measured on advocacy and revenue today</strong>
+        The industry is shifting fast. The teams building the infrastructure now will own the category advantage.
+      </div>
+      <div class="intro-meta">
+        <div class="meta-item"><div class="meta-dot"></div><span>10 questions</span></div>
+        <div class="meta-item"><div class="meta-dot"></div><span>5 minutes</span></div>
+        <div class="meta-item"><div class="meta-dot"></div><span>Instant score</span></div>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">Start assessment &rarr;</button>
+    </div>
+  </div>
+
+  <div class="screen" id="s-q">
+    <div class="inner">
+      <div class="dim-pill"><div class="dim-pip"></div><span id="dimLbl"></span></div>
+      <h2 class="q-text" id="qText"></h2>
+      <p class="q-sub" id="qSub"></p>
+      <p class="multi-hint" id="mHint" style="display:none">Select all that apply</p>
+      <div class="opts" id="oGrid"></div>
+      <div class="nav">
+        <button class="btn-back" id="btnBack" onclick="goBack()">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11L5 7l4-4"/></svg>Back
+        </button>
+        <button class="btn-next" id="btnNext" onclick="goNext()" disabled>
+          Continue <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="white" stroke-width="2"><path d="M5 11l4-4-4-4"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen" id="s-gate">
+    <div class="gate-inner">
+      <div class="gate-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 12l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="4"/>
+        </svg>
+      </div>
+      <h2 class="gate-h">Your score is ready</h2>
+      <p class="gate-sub">Enter your details to see your full results, dimension breakdown, and personalized recommendations.</p>
+      <div class="gate-form">
+        <div class="two-col">
+          <div class="field-wrap">
+            <label class="field-label">First name</label>
+            <input class="field-input" id="ff" type="text" placeholder="Jane" autocomplete="given-name">
+            <span class="err-msg" id="ef">Required</span>
+          </div>
+          <div class="field-wrap">
+            <label class="field-label">Last name</label>
+            <input class="field-input" id="fl" type="text" placeholder="Smith" autocomplete="family-name">
+            <span class="err-msg" id="el">Required</span>
+          </div>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Work email</label>
+          <input class="field-input" id="fe" type="email" placeholder="jane@company.com" autocomplete="email">
+          <span class="err-msg" id="ee">Please enter a valid work email</span>
+        </div>
+        <div class="field-wrap">
+          <label class="field-label">Company</label>
+          <input class="field-input" id="fc" type="text" placeholder="Acme Corp" autocomplete="organization">
+          <span class="err-msg" id="ec">Required</span>
+        </div>
+        <button class="btn-reveal" id="btnReveal" onclick="submitGate()">
+          See my score
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2"><path d="M6 12l4-4-4-4"/></svg>
+        </button>
+      </div>
+      <p class="gate-privacy">No spam. Your results will be shared with the SlapFive team to prepare for any future conversations.</p>
+    </div>
+  </div>
+
+  <div class="screen" id="s-res">
+    <div class="res-inner">
+      <div class="res-top">
+        <div class="score-wrap">
+          <span class="score-big" id="sBig" style="color:var(--orange)">0</span>
+          <span class="score-of">/30</span>
+        </div>
+        <div class="tier-tag" id="tTag"></div>
+        <h2 class="res-title" id="rTitle"></h2>
+        <p class="res-desc" id="rDesc"></p>
+      </div>
+      <div class="breakdown" id="bdown"></div>
+      <div class="proof-row">
+        <div class="proof-card"><span class="proof-num">$1M+</span><span class="proof-lbl"><strong>Per quarter in referrals</strong>RingCentral</span></div>
+        <div class="proof-card"><span class="proof-num">90 days</span><span class="proof-lbl"><strong>Shorter sales cycles</strong>Payscale</span></div>
+        <div class="proof-card"><span class="proof-num">$19.5M</span><span class="proof-lbl"><strong>Influenced revenue 2025</strong>Planview</span></div>
+      </div>
+      <div class="cta-bar">
+        <div class="cta-words">
+          <p class="cta-title">See how to close your gaps</p>
+          <p class="cta-sub">Get a personalized walkthrough from the SlapFive team</p>
+        </div>
+        <button class="btn-cta" onclick="window.open('https://slapfive.com','_blank')">Book a demo &rarr;</button>
+      </div>
+      <button class="btn-restart" onclick="restartQuiz()">Retake assessment</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const WEBHOOK = "https://webhooks.workato.com/webhooks/rest/337d4f1c-e02a-4c9c-a841-508f6f237f05/quiz-submission";
+const DIMS = ["Advocate identification","Preference capture","Activation","Request fulfillment","Revenue attribution"];
+const QS = [
+  { dim:0, multi:false, text:"How do you currently identify customers who are ready to advocate?", sub:"Think about the signals you rely on today, not just what you wish you had.",
+    opts:[{l:"We wait for hand-raises",d:"Customers reach out or respond to broad outreach",s:0},{l:"Health scores only",d:"Operational data like NPS or product usage",s:1},{l:"Sales or CS nominations",d:"Reps flag customers they think are a good fit",s:2},{l:"Unified signal model",d:"Community activity, health, sentiment, and preferences combined",s:3}] },
+  { dim:0, multi:false, text:"When a customer shows advocacy signals in your community, does that surface in your advocacy platform?", sub:"Advocacy signals include positive sentiment, peer helping behavior, or demonstrated mastery of a use case.",
+    opts:[{l:"No, signals stay in the community",d:"No connection between community behavior and advocacy tools",s:0},{l:"Manually, after a nomination",d:"Someone notices and passes it along",s:1},{l:"Sometimes, based on health scores",d:"Operational signals trigger outreach but not community signals",s:2},{l:"Automatically in real time",d:"Positive sentiment, peer helping, and mastery trigger the advocacy platform",s:3}] },
+  { dim:1, multi:true, text:"At what point in the customer lifecycle do you first capture advocacy preferences?", sub:"Select all that apply. Preferences tell you what types of activities each customer is willing to do.",
+    opts:[{l:"Never formally",d:"Preferences are not captured in a structured way",s:0},{l:"After renewal",d:"Preferences are discussed when the contract is renewed",s:1},{l:"After a sales or CS nomination",d:"Preferences gathered when someone is flagged as an advocate",s:1},{l:"Post-onboarding survey",d:"A survey captures preferences after the customer is live",s:2},{l:"Community profile setup or day one",d:"Captured as part of the earliest onboarding touchpoint",s:3},{l:"A different method",d:"Our approach does not fit the options above",s:1}] },
+  { dim:1, multi:false, text:"When advocacy preferences are captured, where does that data live and who can act on it?", sub:"The value of preference data depends entirely on whether the right people can see it at the right time.",
+    opts:[{l:"Spreadsheet or email",d:"Preferences tracked informally and not always accessible",s:0},{l:"CRM only",d:"Logged in Salesforce but not synced elsewhere",s:1},{l:"Advocacy platform only",d:"Advocacy team can see it but community team cannot",s:2},{l:"Synced across all systems",d:"Community, advocacy platform, and CRM all reflect current preferences",s:3}] },
+  { dim:2, multi:false, text:"How do advocates currently discover and respond to advocacy opportunities?", sub:"The mechanism matters as much as the message.",
+    opts:[{l:"Email outreach only",d:"Advocates receive emails when a need arises",s:0},{l:"A separate advocate portal",d:"Advocates must log into a dedicated destination outside their usual tools",s:1},{l:"Embedded in tools they already use",d:"Opportunities appear in the community or other platforms they visit regularly",s:2},{l:"Personalized and in-community",d:"Segmented, preference-matched opportunities appear where advocates already spend time",s:3}] },
+  { dim:2, multi:false, text:"Can you suppress advocacy asks for customers in a sensitive lifecycle stage?", sub:"Examples include an open escalation, renewal risk flag, or a recent low NPS score.",
+    opts:[{l:"No suppression logic exists",d:"All customers can receive asks regardless of situation",s:0},{l:"Manual suppression",d:"Someone on the team checks before sending",s:1},{l:"Partially automated",d:"Some signals trigger suppression but coverage is incomplete",s:2},{l:"Fully automated",d:"CS platform and CRM signals automatically gate who receives asks",s:3}] },
+  { dim:3, multi:true, text:"When multiple teams need advocates, how are those requests managed?", sub:"Select all that apply. Think about marketing, sales, analyst relations, and executive teams making asks simultaneously.",
+    opts:[{l:"Over email or Slack",d:"Requests sent informally with no central tracking",s:0},{l:"Each team manages separately",d:"No visibility across teams into who is being asked for what",s:0},{l:"Multiple tools requiring manual consolidation",d:"Requests exist in project management and advocacy platforms separately",s:1},{l:"One team owns a central queue",d:"A single team receives and routes all requests",s:2},{l:"Single automated fulfillment engine",d:"All requests flow through one system regardless of source",s:3},{l:"Other",d:"Our approach does not fit the options above",s:1}] },
+  { dim:3, multi:false, text:"How complete is your view of each advocate when you make an ask?", sub:"A complete profile changes the quality and timing of every request.",
+    opts:[{l:"Name and company only",d:"Basic contact information is all we have",s:0},{l:"CRM data",d:"Deal history and account details",s:1},{l:"CRM plus health data",d:"Health scores and product usage from our CS platform",s:2},{l:"Full single pane of glass",d:"Community activity, preferences, history, health, and personal context unified",s:3}] },
+  { dim:4, multi:false, text:"Can you connect a completed advocacy activity to a specific revenue outcome in Salesforce?", sub:"This is the question your CFO will eventually ask.",
+    opts:[{l:"No connection exists",d:"Advocacy activities and revenue data live in separate systems",s:0},{l:"Directional estimates only",d:"We can point to examples but cannot quantify systematically",s:1},{l:"Yes, in our advocacy platform",d:"Advocacy completions tracked with associated revenue impact in the platform",s:2},{l:"Closed-loop in Salesforce",d:"Influence events tied to opportunities in a live dashboard",s:3}] },
+  { dim:4, multi:false, text:"Can you show your CFO or CRO the win rate difference between influenced and non-influenced deals?", sub:"Payscale demonstrated a win rate increase from 20% to 50% for influenced opportunities.",
+    opts:[{l:"No, we cannot show this today",d:"The data does not exist in a reportable form",s:0},{l:"Anecdotally through deal stories",d:"We have examples but no systematic comparison",s:1},{l:"Partially tracked but not systematic",d:"Some data exists but it is not consistent or complete",s:2},{l:"Yes, live in a Salesforce dashboard",d:"Influenced versus uninfluenced deal outcomes visible in real time",s:3}] }
+];
+const TIERS = [
+  {min:0,max:7,cls:"0",label:"Significant gaps identified",title:"The infrastructure is missing",desc:"Your advocacy program is operating without the systems it needs to scale. The intent is there but identification, activation, and attribution are not yet connected. The gaps are clear and solvable."},
+  {min:8,max:14,cls:"1",label:"Partially built",title:"Real progress, real friction",desc:"You have meaningful pieces in place but fragmentation is limiting your scale. Advocates are being found and activated through manual effort rather than systematic signals. Connecting the infrastructure unlocks the next level."},
+  {min:15,max:22,cls:"2",label:"Scaling with gaps",title:"Strong foundation, attribution gaps",desc:"Your identification and activation are working reasonably well. The primary gap is attribution. Connecting advocacy completions to closed-loop Salesforce reporting will change how leadership views the program."},
+  {min:23,max:30,cls:"3",label:"Revenue-ready",title:"Your program is built to scale",desc:"You have the infrastructure in place. Advocates are identified from signals, activated through personalized asks, and their impact is visible in the systems executives trust. Focus on expanding coverage and optimizing activation timing."}
+];
+
+let cur=0, ans=Array(QS.length).fill(null), mSels=QS.map(()=>new Set()), sel=null;
+
+function startQuiz(){ swap('s-intro','s-q'); render(); }
+
+function render(){
+  const q=QS[cur], tot=QS.length;
+  document.getElementById('prog').style.width=((cur/tot)*100)+'%';
+  document.getElementById('qcount').textContent=(cur+1)+' of '+tot;
+  document.getElementById('dimLbl').textContent=DIMS[q.dim];
+  document.getElementById('qText').textContent=q.text;
+  document.getElementById('qSub').textContent=q.sub;
+  document.getElementById('btnBack').style.visibility=cur===0?'hidden':'visible';
+  document.getElementById('mHint').style.display=q.multi?'block':'none';
+  if(!q.multi) sel=ans[cur];
+  const g=document.getElementById('oGrid');
+  g.className='opts'+(q.opts.length>4?' col1':'');
+  g.innerHTML='';
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement('button');
+    if(q.multi){
+      const on=mSels[cur].has(i);
+      b.className='opt'+(on?' sel':'');
+      b.innerHTML='<div class="opt-row"><div class="chk"></div><div class="opt-words"><span class="opt-label">'+o.l+'</span><span class="opt-desc">'+o.d+'</span></div></div>';
+      b.onclick=()=>{ if(mSels[cur].has(i)) mSels[cur].delete(i); else mSels[cur].add(i); ans[cur]=new Set(mSels[cur]); document.querySelectorAll('.opt').forEach((x,j)=>x.classList.toggle('sel',mSels[cur].has(j))); document.getElementById('btnNext').disabled=mSels[cur].size===0; };
+    } else {
+      b.className='opt'+(sel===i?' sel':'');
+      b.innerHTML='<span class="opt-label">'+o.l+'</span><span class="opt-desc">'+o.d+'</span><span class="opt-score">'+o.s+'</span>';
+      b.onclick=()=>{ sel=i; ans[cur]=i; document.querySelectorAll('.opt').forEach((x,j)=>x.classList.toggle('sel',j===i)); document.getElementById('btnNext').disabled=false; };
+    }
+    g.appendChild(b);
+  });
+  document.getElementById('btnNext').disabled=q.multi?(mSels[cur].size===0):(sel===null);
+  const s=document.getElementById('s-q'); s.style.animation='none'; s.offsetHeight; s.style.animation='rise 0.4s cubic-bezier(0.16,1,0.3,1) both';
+}
+
+function score(i){ const q=QS[i],a=ans[i]; if(a===null||a===undefined) return 0; if(q.multi){ const ms=a instanceof Set?a:new Set(); let b=0; ms.forEach(j=>{ if(q.opts[j].s>b) b=q.opts[j].s; }); return b; } return q.opts[a].s; }
+
+function goNext(){
+  const q=QS[cur];
+  if(q.multi){ if(mSels[cur].size===0) return; ans[cur]=new Set(mSels[cur]); } else { if(sel===null) return; ans[cur]=sel; }
+  if(cur<QS.length-1){ cur++; render(); } else { swap('s-q','s-gate'); document.getElementById('prog').style.width='95%'; document.getElementById('qcount').textContent=''; }
+}
+function goBack(){ if(cur>0){ cur--; render(); } }
+
+function submitGate(){
+  const fn=document.getElementById('ff').value.trim(), ln=document.getElementById('fl').value.trim(), em=document.getElementById('fe').value.trim(), co=document.getElementById('fc').value.trim();
+  let ok=true;
+  [['ff','ef',!fn],['fl','el',!ln],['fc','ec',!co]].forEach(([f,e,err])=>{ document.getElementById(f).classList.toggle('err',err); document.getElementById(e).classList.toggle('show',err); if(err) ok=false; });
+  const eErr=!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em);
+  document.getElementById('fe').classList.toggle('err',eErr); document.getElementById('ee').classList.toggle('show',eErr);
+  if(eErr) ok=false;
+  if(!ok) return;
+  const btn=document.getElementById('btnReveal'); btn.disabled=true; btn.textContent='Loading...';
+  const tot=ans.reduce((s,_,i)=>s+score(i),0), ds=[0,0,0,0,0];
+  ans.forEach((_,i)=>ds[QS[i].dim]+=score(i));
+  const tier=TIERS.find(t=>tot>=t.min&&tot<=t.max)||TIERS[0];
+
+  // Build flat answer fields so Workato can map each one individually
+  const flatAnswers = {};
+  ans.forEach((a,i)=>{
+    const q=QS[i];
+    let selected=[];
+    if(q.multi&&a instanceof Set) a.forEach(j=>selected.push(q.opts[j].l));
+    else if(a!==null) selected=[q.opts[a].l];
+    flatAnswers['q'+(i+1)+'_question'] = q.text;
+    flatAnswers['q'+(i+1)+'_answer'] = selected.join(' | ');
+    flatAnswers['q'+(i+1)+'_score'] = score(i);
+  });
+
+  const payload={
+    quiz_type:"advocacy_leader",
+    submitted_at:new Date().toISOString(),
+    contact:{first_name:fn,last_name:ln,email:em,company:co},
+    scores:{total:tot,max:30,advocate_identification:ds[0],preference_capture:ds[1],activation_surfacing:ds[2],request_fulfillment:ds[3],revenue_attribution:ds[4]},
+    tier:tier.label,
+    ...flatAnswers
+  };
+  const go=()=>showResults(tot,ds,tier);
+  const SHEETS_URL="https://script.google.com/macros/s/AKfycbykzvAwwvOsf4q4cXmaqhk98oRsL3PkEHCt2ddUjvzRPzHRQdfRvBf9mkTErpuAf5qpfQ/exec";
+  if(SHEETS_URL==="https://script.google.com/macros/s/AKfycbykzvAwwvOsf4q4cXmaqhk98oRsL3PkEHCt2ddUjvzRPzHRQdfRvBf9mkTErpuAf5qpfQ/exec"){ console.log("Payload:",JSON.stringify(payload,null,2)); go(); }
+  else { fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
+      .then(r=>{ console.log('Sheets response status:',r.status); return r.text(); })
+      .then(t=>{ console.log('Sheets response:',t); })
+      .catch(e=>{ console.log('Sheets error:',e); })
+      .finally(go); }
+}
+
+function showResults(tot,ds,tier){
+  swap('s-gate','s-res');
+  const s=document.getElementById('sBig'); s.textContent=tot; s.className='score-big c'+tier.cls;
+  const t=document.getElementById('tTag'); t.className='tier-tag bg'+tier.cls; t.textContent=tier.label;
+  document.getElementById('rTitle').textContent=tier.title;
+  document.getElementById('rDesc').textContent=tier.desc;
+  const bd=document.getElementById('bdown'); bd.innerHTML='';
+  DIMS.forEach((d,i)=>{ const s=ds[i],p=Math.round((s/6)*100),cc=s<=1?'0':s<=3?'1':s<=4?'2':'3'; const c=document.createElement('div'); c.className='bd-card'; c.style.animationDelay=(0.8+i*0.07)+'s'; c.innerHTML='<div class="bd-label">'+d+'</div><div class="bd-score c'+cc+'">'+s+'</div><div class="bd-max">/6</div><div class="bd-bar"><div class="bd-fill bar'+cc+'" style="width:'+p+'%"></div></div>'; bd.appendChild(c); });
+  document.getElementById('prog').style.width='100%';
+}
+
+function swap(from,to){ document.getElementById(from).classList.remove('active'); document.getElementById(to).classList.add('active'); }
+
+function restartQuiz(){
+  cur=0; ans=Array(QS.length).fill(null); mSels=QS.map(()=>new Set()); sel=null;
+  ['s-res','s-gate','s-q'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  document.getElementById('s-intro').classList.add('active');
+  document.getElementById('prog').style.width='0%'; document.getElementById('qcount').textContent='';
+  ['ff','fl','fe','fc'].forEach(id=>{ document.getElementById(id).value=''; document.getElementById(id).classList.remove('err'); });
+  ['ef','el','ee','ec'].forEach(id=>document.getElementById(id).classList.remove('show'));
+  const btn=document.getElementById('btnReveal'); btn.disabled=false; btn.innerHTML='See my score <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="2"><path d="M6 12l4-4-4-4"/></svg>';
+}
+</script>
+</body>
+</html>
